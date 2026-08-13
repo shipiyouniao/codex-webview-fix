@@ -5,14 +5,6 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-$utf8WithoutBom = New-Object System.Text.UTF8Encoding($false)
-$utf8Strict = New-Object System.Text.UTF8Encoding($false, $true)
-
-function Read-Utf8Text {
-    param([string]$Path)
-
-    return [System.IO.File]::ReadAllText($Path, $utf8Strict)
-}
 
 function Get-CodexExtension {
     param([string]$ExplicitPath)
@@ -23,7 +15,7 @@ function Get-CodexExtension {
         if (-not (Test-Path -LiteralPath $packagePath)) {
             throw "package.json was not found under: $resolved"
         }
-        $package = Read-Utf8Text -Path $packagePath | ConvertFrom-Json
+        $package = Get-Content -LiteralPath $packagePath -Raw | ConvertFrom-Json
         if ($package.publisher -ne 'openai' -or $package.name -ne 'chatgpt') {
             throw "The selected directory is not the openai.chatgpt extension: $resolved"
         }
@@ -48,7 +40,7 @@ function Get-CodexExtension {
         $registryPath = Join-Path $root 'extensions.json'
         if (Test-Path -LiteralPath $registryPath) {
             try {
-                foreach ($entry in (Read-Utf8Text -Path $registryPath | ConvertFrom-Json)) {
+                foreach ($entry in (Get-Content -LiteralPath $registryPath -Raw | ConvertFrom-Json)) {
                     if ($entry.identifier.id -eq 'openai.chatgpt') {
                         $locationPath = $entry.location.fsPath
                         if (-not $locationPath) {
@@ -73,7 +65,7 @@ function Get-CodexExtension {
                 continue
             }
             try {
-                $package = Read-Utf8Text -Path $packagePath | ConvertFrom-Json
+                $package = Get-Content -LiteralPath $packagePath -Raw | ConvertFrom-Json
             } catch {
                 continue
             }
@@ -122,7 +114,7 @@ function Get-UniqueFileContaining {
 
     $matches = @(
         Get-ChildItem -LiteralPath $Directory -File -Filter $Filter |
-            Where-Object { (Read-Utf8Text -Path $_.FullName).Contains($Needle) }
+            Where-Object { (Get-Content -LiteralPath $_.FullName -Raw).Contains($Needle) }
     )
     if ($matches.Count -ne 1) {
         throw "Expected exactly one $Filter file containing '$Needle'; found $($matches.Count). No files were changed."
@@ -135,8 +127,8 @@ function Get-ReadinessPatch {
 
     $mainFile = Get-UniqueFileContaining -Directory $AssetsDirectory -Filter 'app-main-*.js' -Needle 'React root render requested'
     $routeFile = Get-UniqueFileContaining -Directory $AssetsDirectory -Filter 'app-initial-*.js' -Needle 'app routes mounted after'
-    $mainText = Read-Utf8Text -Path $mainFile.FullName
-    $routeText = Read-Utf8Text -Path $routeFile.FullName
+    $mainText = Get-Content -LiteralPath $mainFile.FullName -Raw
+    $routeText = Get-Content -LiteralPath $routeFile.FullName -Raw
 
     $runtimeMarker = '[startup][renderer] webview runtime ready'
     $routeReadyPattern = '(?<channel>[A-Za-z_$][A-Za-z0-9_$]*)\.dispatchMessage\(`ready`,\{\}\)'
@@ -195,7 +187,7 @@ function Get-ReadinessPatch {
 function Get-CssOnlyEntryPatch {
     param([string]$EntryPath)
 
-    $entryText = Read-Utf8Text -Path $EntryPath
+    $entryText = Get-Content -LiteralPath $EntryPath -Raw
     $dependencyMapMatch = [regex]::Match($entryText, 'm\.f\|\|\(m\.f=\[(?<dependencies>[^\]]+)\]\)')
     if (-not $dependencyMapMatch.Success) {
         throw 'Could not identify the entry dependency map. No files were changed.'
@@ -255,12 +247,13 @@ if (-not (Test-Path -LiteralPath $assetsDirectory)) {
 }
 $backupRootBase = if ($env:LOCALAPPDATA) { $env:LOCALAPPDATA } else { [System.IO.Path]::GetTempPath() }
 $backupRoot = Join-Path $backupRootBase 'CodexWebviewReadinessFix\backups'
+$utf8WithoutBom = New-Object System.Text.UTF8Encoding($false)
 
 $indexPath = Join-Path $webviewDirectory 'index.html'
 if (-not (Test-Path -LiteralPath $indexPath)) {
     throw "Webview index was not found under: $webviewDirectory"
 }
-$indexText = Read-Utf8Text -Path $indexPath
+$indexText = Get-Content -LiteralPath $indexPath -Raw
 $assetGraphMarker = '<!-- codex-webview-fix: asset-graph-reset='
 $assetGraphAlreadyReset = $indexText.Contains($assetGraphMarker)
 

@@ -4,13 +4,6 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-$utf8Strict = New-Object System.Text.UTF8Encoding($false, $true)
-
-function Read-Utf8Text {
-    param([string]$Path)
-
-    return [System.IO.File]::ReadAllText($Path, $utf8Strict)
-}
 
 $backupRootBase = if ($env:LOCALAPPDATA) { $env:LOCALAPPDATA } else { [System.IO.Path]::GetTempPath() }
 $backupRoot = Join-Path $backupRootBase 'CodexWebviewReadinessFix\backups'
@@ -31,13 +24,13 @@ if (-not $BackupPath) {
     }
 }
 
-$manifest = Read-Utf8Text -Path $manifestFile.FullName | ConvertFrom-Json
+$manifest = Get-Content -LiteralPath $manifestFile.FullName -Raw | ConvertFrom-Json
 $extensionRoot = [System.IO.Path]::GetFullPath([string]$manifest.extensionPath)
 $packagePath = Join-Path $extensionRoot 'package.json'
 if (-not (Test-Path -LiteralPath $packagePath)) {
     throw "The extension recorded in the backup no longer exists: $extensionRoot"
 }
-$package = Read-Utf8Text -Path $packagePath | ConvertFrom-Json
+$package = Get-Content -LiteralPath $packagePath -Raw | ConvertFrom-Json
 if ($package.publisher -ne 'openai' -or $package.name -ne 'chatgpt') {
     throw "The backup does not point to an openai.chatgpt extension: $extensionRoot"
 }

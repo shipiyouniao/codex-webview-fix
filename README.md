@@ -19,10 +19,6 @@ The current script has been validated against `openai.chatgpt 26.803.61601`.
 It intentionally fails closed when a newer bundle no longer matches the
 validated structure.
 
-All extension source files are decoded as strict UTF-8. This is required on
-Windows PowerShell 5.1 systems whose default ANSI code page is not UTF-8;
-otherwise non-ASCII bundle content can be silently corrupted while patching.
-
 ## Platform support
 
 Only Windows is currently supported and tested. Pull requests that add safe,
