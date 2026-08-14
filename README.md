@@ -1,5 +1,13 @@
 # Codex Webview Fix
 
+> [!NOTE]
+> This repository is archived. OpenAI fixed the startup watchdog issue in
+> `26.810.41047` stable and `26.5810.41047` pre-release. Update the official
+> extension instead of applying this workaround to current versions. Separate
+> proxy, VPN, authentication, or indefinitely pending account-request failures
+> are not fixed by this repository. See the
+> [upstream resolution](https://github.com/openai/codex/issues/37458#issuecomment-5287557175).
+
 An unofficial temporary workaround for the Codex VS Code extension startup
 failure tracked in [openai/codex#37458](https://github.com/openai/codex/issues/37458):
 
